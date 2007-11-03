@@ -1,4 +1,4 @@
-# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode.pm 4834 2007-11-03T09:22:42.139028Z daisuke  $
+# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode.pm 4838 2007-11-03T11:10:39.632968Z daisuke  $
 #
 # Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
 # All rights reserved.
@@ -11,7 +11,7 @@ use Carp ();
 
 __PACKAGE__->mk_accessors($_) for qw(_decoder);
 
-our $VERSION = '0.00001';
+our $VERSION = '0.00002';
 
 sub new
 {

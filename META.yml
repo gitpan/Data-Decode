@@ -21,4 +21,4 @@ requires:
   Exception::Class: 0
   HTTP::Response::Encoding: 0
 tests: t/*.t t/*/*.t
-version: 0.00001
+version: 0.00002

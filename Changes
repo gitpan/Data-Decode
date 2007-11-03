@@ -1,5 +1,9 @@
 Changes
 =======
 
+0.00002 03 Nov 2007
+  - Fix naming of Data::Decode::Encode::HTTP::Response
+  - Fix for POD tests
+
 0.00001 03 Nov 2007
   - Initial release

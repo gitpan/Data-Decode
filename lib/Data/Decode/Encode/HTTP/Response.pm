@@ -1,9 +1,9 @@
-# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode/Encode/HTTP/Response.pm 4834 2007-11-03T09:22:42.139028Z daisuke  $
+# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode/Encode/HTTP/Response.pm 4839 2007-11-03T11:11:34.419356Z daisuke  $
 #
 # Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
 # All rights reserved.
 
-package Data::Decode::HTTP::Response;
+package Data::Decode::Encode::HTTP::Response;
 use strict;
 use warnings;
 use Data::Decode::Exception;
@@ -50,6 +50,14 @@ __END__
 
 =head1 NAME
 
-Data::Decode::HTTP::Response - Get Encoding Hints From HTTP::Response
+Data::Decode::Encode::HTTP::Response - Get Encoding Hints From HTTP::Response
+
+=head1 METHODS
+
+=head2 new
+
+=head2 decode
+
+=head2 get_encoding
 
 =cut
