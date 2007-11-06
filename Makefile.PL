@@ -9,9 +9,10 @@ requires('Class::Accessor::Fast');
 requires('Encode');
 requires('Encode::Guess');
 requires('Exception::Class');
+requires('HTML::Parser');
 requires('HTTP::Response::Encoding');
 
 tests('t/*.t t/*/*.t');
 
-auto_include;
+auto_install;
 WriteAll;

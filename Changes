@@ -1,6 +1,10 @@
 Changes
 =======
 
+0.00003 06 Nov 2007
+  - Add ability to decode HTTP response from its META tags on top of
+    the headers.
+
 0.00002 03 Nov 2007
   - Fix naming of Data::Decode::Encode::HTTP::Response
   - Fix for POD tests
