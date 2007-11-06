@@ -1,6 +1,10 @@
 Changes
 =======
 
+0.00005 07 Nov 2007
+  - Forgot to add new module to MANIFEST.
+    No code changes
+
 0.00004 06 Nov 2007
   - Be more tolerant about decoding, from HTTP response hints.
     Now we can decode far more cases where the HTTP headers are saying

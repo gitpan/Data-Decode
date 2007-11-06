@@ -17,6 +17,7 @@ lib/Data/Decode/Encode/Guess/JP.pm
 lib/Data/Decode/Encode/HTTP/Response.pm
 lib/Data/Decode/Encode/HTTP/Response/Parser.pm
 lib/Data/Decode/Exception.pm
+lib/Data/Decode/Util.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
