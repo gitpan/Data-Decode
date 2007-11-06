@@ -1,4 +1,4 @@
-# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode/Encode/HTTP/Response.pm 8610 2007-11-06T07:46:36.901340Z daisuke  $
+# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode/Encode/HTTP/Response.pm 8763 2007-11-06T09:42:32.814221Z daisuke  $
 #
 # Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
 # All rights reserved.
@@ -9,6 +9,7 @@ use warnings;
 use base qw(Class::Accessor::Fast);
 use Data::Decode::Exception;
 use Encode();
+use Data::Decode::Util qw(try_decode pick_encoding);
 use HTTP::Response::Encoding;
 
 __PACKAGE__->mk_accessors($_) for qw(_parser);
@@ -20,12 +21,29 @@ sub decode
     if (! $hints->{response} || ! eval { $hints->{response}->isa('HTTP::Response') }) {
         Data::Decode::Exception::Deferred->throw;
     }
+    my $res = $hints->{response};
 
-    my $encoding = $self->get_encoding($hints->{response});
-    if (! $encoding) {
-        Data::Decode::Exception::Deferred->throw;
+    my $decoded;
+    { # Attempt to decode from header information
+        my $encoding = pick_encoding(
+            $res->encoding, 
+            ( ($res->header('Content-Type') || '') =~ /charset=([\w\-]+)/g),
+        );
+        $decoded = try_decode($encoding, $string);
+        return $decoded if $decoded;
     }
-    return Encode::decode( $encoding, $string );
+
+    { # Attempt to decode from meta information
+        my $p = $self->parser();
+        my $encoding = pick_encoding(
+            $p->extract_encodings( $res->content )
+        );
+
+        $decoded = try_decode($encoding, $string);
+        return $decoded if $decoded;
+    }
+
+    Data::Decode::Exception::Deferred->throw;
 }
 
 sub parser
@@ -38,45 +56,6 @@ sub parser
         $self->_parser($parser);
     }
     return $parser;
-}
-
-sub _pick_encoding
-{
-    my $self = shift;
-    for my $e (@_) {
-        next unless defined $e;
-        next unless Encode::find_encoding($e);
-        return $e;
-    }
-    return ();
-}
-
-sub get_encoding
-{
-    my ($self, $res) = @_;
-
-    my $encoding;
-    { # Attempt to decode from meta information
-        my $p = $self->parser();
-
-        $encoding = $self->_pick_encoding(
-            $p->extract_encodings( $res->content )
-        );
-
-
-        return $encoding if $encoding;
-    }
-
-
-    { # Attempt to decode from header information
-        $encoding = $self->_pick_encoding(
-            $res->encoding, 
-            ( ($res->header('Content-Type') || '') =~ /charset=([\w\-]+)/g),
-        );
-        return $encoding if $encoding;
-    }
-
-    return $encoding;
 }
 
 1;
@@ -92,8 +71,6 @@ Data::Decode::Encode::HTTP::Response - Get Encoding Hints From HTTP::Response
 =head2 new
 
 =head2 decode
-
-=head2 get_encoding
 
 =head2 parser
 

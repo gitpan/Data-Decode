@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.00004 06 Nov 2007
+  - Be more tolerant about decoding, from HTTP response hints.
+    Now we can decode far more cases where the HTTP headers are saying
+    charset=X, but the META tags in the HTML says another charset
+
 0.00003 06 Nov 2007
   - Add ability to decode HTTP response from its META tags on top of
     the headers.
