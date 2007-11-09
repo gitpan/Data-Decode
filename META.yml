@@ -22,4 +22,4 @@ requires:
   HTML::Parser: 0
   HTTP::Response::Encoding: 0
 tests: t/*.t t/*/*.t
-version: 0.00005
+version: 0.00006

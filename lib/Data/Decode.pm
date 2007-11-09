@@ -1,4 +1,4 @@
-# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode.pm 8766 2007-11-06T15:04:26.716102Z daisuke  $
+# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode.pm 8881 2007-11-09T10:28:54.182349Z daisuke  $
 #
 # Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
 # All rights reserved.
@@ -8,10 +8,11 @@ use strict;
 use warnings;
 use base qw(Class::Accessor::Fast);
 use Carp ();
+use Data::Decode::Exception;
 
 __PACKAGE__->mk_accessors($_) for qw(_decoder);
 
-our $VERSION = '0.00005';
+our $VERSION = '0.00006';
 
 sub new
 {
@@ -45,7 +46,20 @@ sub decode
 
     return () unless defined $data;
     $hints ||= {};
-    $self->decoder->decode($self, $data, $hints);
+
+    my $ret = eval {
+        $self->decoder->decode($self, $data, $hints);
+    };
+    my $e;
+    if ($e = Data::Decode::Exception::Deferred->caught() ) {
+        # Just deferred. return ()
+        return ();
+    } elsif ( $e = Exception::Class->caught() ) {
+        # Oh, this we re-throw
+        eval { $e->isa('Data::Decode::Exception') } ?
+            $e->rethrow : die $e;
+    }
+    return $ret;
 }
 
 1;
