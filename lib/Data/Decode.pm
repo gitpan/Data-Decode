@@ -1,47 +1,31 @@
-# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode.pm 8881 2007-11-09T10:28:54.182349Z daisuke  $
-#
-# Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
-# All rights reserved.
-
 package Data::Decode;
-use strict;
-use warnings;
-use base qw(Class::Accessor::Fast);
-use Carp ();
+use Moose;
+use Moose::Util::TypeConstraints;
+use namespace::clean -except => qw(meta);
 use Data::Decode::Exception;
+use Data::Decode::Types;
 
-__PACKAGE__->mk_accessors($_) for qw(_decoder);
+our $VERSION = '0.00007_01';
 
-our $VERSION = '0.00006';
+has decoder => (
+    is => 'ro',
+    isa => 'Data::Decode::Decoder',
+    required => 1,
+    coerce => 1,
+);
 
-sub new
-{
-    my $class = shift;
-    my %args  = @_;
-    my $self  = bless {}, $class;
-    $self->decoder($args{strategy});
+sub import {
+    my ( $self, @modules ) = @_;
 
-    return $self;
-}
-
-sub decoder
-{
-    my $self = shift;
-
-    my $ret;
-    if (! @_) {
-        $ret = $self->_decoder();
-    } else {
-        $ret = $self->_decoder($_[0] || Carp::croak("No strategy specified") );
-        if (! eval { $_[0]->can('decode') }) {
-            Carp::croak("$_[0] does not implement a 'decode' method");
+    foreach my $class (@modules) {
+        if ($class !~ s/^\+//) {
+            $class = "Data::Decode::$class";
+            Class::MOP::load_class($class);
         }
     }
-    return $ret;
 }
 
-sub decode
-{
+sub decode {
     my ($self, $data, $hints) = @_;
 
     return () unless defined $data;
@@ -72,31 +56,45 @@ Data::Decode - Pluggable Data Decoder
 
 =head1 SYNOPSIS
 
-  use Data::Decode;
+  # simple usage (you probably won't use this form much)
+  use Data::Decode qw( Encode::Guess );
 
   my $decoder = Data::Decode->new(
-    strategy => Data::Decode::Encode::Guess->new()
+    decoder => Data::Decode::Encode::Gues->new()
   );
-  my $decoded = $decoder->decode($data);
+  $decoder->decode($data);
+
+  # cascading several decoders
+  use Data::Decode
+    qw( HTTP::Response Encode::Guess );
+
+  my $decoder = Data::Decode->new(
+    decoder => [
+      Data::Decode::Encode::HTTP::Response->new(),
+      Data::Decode::Encode::Guess->new(),
+    ]
+  );
+
+  my $res = LWP::UserAgent->new->get("http://whatever.example.com");
+
+  my $decoded = $decoder->decode($res->content, { response => $res });
 
 =head1 DESCRIPTION
-
-WARNING: Alpha grade software.
 
 Data::Decode implements a pluggable "decoder". The main aim is to provide
 a uniform interface to decode a given data while allowing the actual
 algorithm being used to be changed depending on your needs..
 
 For now this is aimed at decoding miscellaneous text to perl's internal 
-unicode encoding.
+unicode encoding, but should be able to handle anything if you give it a 
+proper plugin
 
 =head1 DECODING TO UNICODE
 
 Japanese, which is the language that I mainly deal with, has an annoying
-property, in that it can come in at least 4 different flavors (utf-8,
-shift-jis, euc-jp and iso-2022-jp).
-Even worse, vendors may have more vendor-specific symbols, such as the
-pictograms in mobile phones.
+property: It can come in at least 4 different flavors (utf-8, shift-jis,
+euc-jp and iso-2022-jp). Even worse, vendors may have more vendor-specific 
+symbols, such as the pictograms in mobile phones.
 
 Ways to decode these strings into unicode varies between each environment 
 and application.
@@ -111,16 +109,11 @@ from the surface interface, so other users who find a particular strategy to
 decode strings can then upload their way to CPAN, and everyone can benefit
 from it.
 
-=head1 DEFAULT STRATEGIES
-
-By default, this module comes with a few default strategies. These are just
-basic strategies -- they probably work in most cases, but you are strongly
-encouraged not to overtrust these algorithms.
-
-=head1 CHAINING
+=head1 CASCADING 
 
 Data::Decode comes with a simple chaining functionality. You can take as many
-decoders as you want, and you can stack them on top of each other.
+decoders as you want, and you can stack them on top of each other. To enable
+this feature, just provide an array as the decoder, instead of a single object.
 
 =head1 METHODS
 
@@ -130,20 +123,39 @@ Instantiates a new Data::Decode object.
 
 =over 4
 
-=item strategy
+=item decoder
 
 Required. Takes in the object that encapsulates the actual decoding logic.
-The object must have a method named "decode", which takes in a reference
-to the Data::Decode object and a string to be decoded. An optional third
-parameter may be provided to specify any hints that could be used to figure
-out what to do. 
 
+(WARNING: Subject to change - we may require an object that implements a role
+instead of just a function in the future. Beware!) The object must have a 
+method named "decode", which takes in a reference to the Data::Decode object 
+and a string to be decoded. An optional third parameter may be provided to 
+specify any hints that could be used to figure out what to do. 
+
+  # a decode() method
   sub decode {
     my ($self, $decoder, $string, $hints) = @_;
     # $decoder = Data::Decode object
     # $string  = a scalar to be decoded
     # $hints   = a hashref of hints
   }
+
+You may also specify the class names of the decoders -- in that case, an 
+argument-less new() will be called upon the class name to instantiate the
+decoder.
+
+If you provide a list of decoders, Data::Decode::Chain will automatically be
+set for you.
+
+  my $decoder = Data::Decode->new(
+    decoder => [  # This will turn into a Data::Decode::Chain object
+      Decoder1->new(),
+      Decoder2->new(),
+      Decoder3->new(),
+      ...
+    ]
+  );
 
 =back
 
@@ -155,11 +167,11 @@ the actual underlying decoders.
 
 =head2 decoder
 
-Get/set the underlying decoder object.
+Get the underlying decoder object.
 
 =head1 AUTHOR
 
-Copyright (c) 2007 Daisuke Maki E<lt>daisuke@endeworks.jpE<gt>
+Daisuke Maki E<lt>daisuke@endeworks.jpE<gt>
 
 =head1 LICENSE
 

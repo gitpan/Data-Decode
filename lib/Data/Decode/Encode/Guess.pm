@@ -1,35 +1,33 @@
-# $Id: /mirror/perl/Data-Decode/trunk/lib/Data/Decode/Encode/Guess.pm 4834 2007-11-03T09:22:42.139028Z daisuke  $
-#
-# Copyright (c) 2007 Daisuke Maki <daisuke@endeworks.jp>
-# All rights reserved.
 
 package Data::Decode::Encode::Guess;
-use strict;
-use warnings;
-use base qw(Class::Accessor::Fast);
+use Moose;
+use namespace::clean -except => qw(meta);
 use Encode();
 use Encode::Guess();
 
-__PACKAGE__->mk_accessors($_) for qw(encodings);
+has encodings => (
+    is => 'ro',
+    isa => 'ArrayRef',
+    lazy_build => 1,
+);
 
-sub new
-{
-    my $class = shift;
-    my %args  = @_;
-    $args{encodings} ||= [];
-    $class->SUPER::new(\%args);
+sub _build_encodings {
+    return [];
 }
 
-sub decode
-{
+sub guess_encoding {
     my ($self, $decoder, $string, $hints) = @_;
-
     local $Encode::Guess::NoUTFAutoGuess = 1;
-    my $guess = Encode::Guess::guess_encoding(
+    return Encode::Guess::guess_encoding(
         $string,
         @{ $self->encodings }
     );
+}
 
+sub decode {
+    my ($self, $decoder, $string, $hints) = @_;
+
+    my $guess = $self->guess_encoding($decoder, $string, $hints);
     if (! ref $guess) {
         Data::Decode::Exception::Deferred->throw($guess);
     }
